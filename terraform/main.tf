@@ -32,9 +32,9 @@ resource "aws_key_pair" "builder_key" {
 
 # Create a security group
 resource "aws_security_group" "builder_sg" {
-  name        = "builder-sg-new"  # Changed to avoid duplicate
+  name        = "builder-sg-new"
   description = "Security group for builder EC2 instance"
-  vpc_id      = "vpc-044604d0bfb707142"  # Using the specified VPC
+  vpc_id      = "vpc-044604d0bfb707142"
 
   ingress {
     from_port   = 22
@@ -46,6 +46,13 @@ resource "aws_security_group" "builder_sg" {
   ingress {
     from_port   = 5001
     to_port     = 5001
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -62,16 +69,16 @@ resource "aws_security_group" "builder_sg" {
 data "aws_subnet" "default" {
   vpc_id            = "vpc-044604d0bfb707142"
   default_for_az    = true
-  availability_zone = "us-east-1a"  # Default subnet in us-east-1a
+  availability_zone = "us-east-1a"
 }
 
 # Create an EC2 instance
 resource "aws_instance" "builder" {
-  ami           = "ami-0e86e20dae9224db8"  # Ubuntu 22.04 AMI in us-east-1
+  ami           = "ami-0e86e20dae9224db8"
   instance_type = "t3.medium"
   key_name      = aws_key_pair.builder_key.key_name
   vpc_security_group_ids = [aws_security_group.builder_sg.id]
-  subnet_id     = data.aws_subnet.default.id  # Using the default subnet
+  subnet_id     = data.aws_subnet.default.id
 
   tags = {
     Name = "builder"
