@@ -1,0 +1,65 @@
+trigger:
+  branches:
+    include:
+      - feature/fix-bug  # Trigger on the branch with the fixed app
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  DOCKERHUB_USERNAME: 'nehoraiiii'
+  IMAGE_NAME: '$(DOCKERHUB_USERNAME)/flask-aws-monitor'
+  # DOCKERHUB_PASSWORD will be stored as a secret in Azure DevOps
+
+stages:
+- stage: CloneRepository
+  displayName: 'Clone Repository'
+  jobs:
+  - job: Clone
+    steps:
+    - checkout: self
+
+- stage: ParallelChecks
+  displayName: 'Parallel Linting & Security Checks'
+  dependsOn: CloneRepository
+  jobs:
+  - job: Linting
+    displayName: 'Linting'
+    steps:
+    - script: |
+        echo "Running Flake8 linting (mock)"
+        echo "Running ShellCheck (mock)"
+        echo "Running Hadolint for Dockerfile (mock)"
+      displayName: 'Run Linting'
+  - job: SecurityScan
+    displayName: 'Security Scanning'
+    steps:
+    - script: |
+        echo "Running Trivy for Docker image (mock)"
+        echo "Running Bandit for Python (mock)"
+      displayName: 'Run Security Scan'
+
+- stage: BuildDockerImage
+  displayName: 'Build Docker Image'
+  dependsOn: ParallelChecks
+  jobs:
+  - job: BuildImage
+    steps:
+    - script: |
+        docker build -t $(IMAGE_NAME):latest ./app
+      displayName: 'Build Docker Image'
+
+- stage: PushToDockerHub
+  displayName: 'Push Docker Image to Docker Hub'
+  dependsOn: BuildDockerImage
+  jobs:
+  - job: PushImage
+    steps:
+    - task: Docker@2
+      displayName: 'Login to Docker Hub'
+      inputs:
+        command: login
+        containerRegistry: 'DockerHubConnection'  # Service connection name in Azure DevOps
+    - script: |
+        docker push $(IMAGE_NAME):latest
+      displayName: 'Push Docker Image'
