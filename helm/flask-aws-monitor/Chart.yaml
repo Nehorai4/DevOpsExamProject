@@ -1,0 +1,6 @@
+apiVersion: v2
+name: flask-aws-monitor
+description: Helm chart for Flask AWS Monitor application
+type: application
+version: 0.1.0
+appVersion: "latest"
